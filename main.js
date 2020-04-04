@@ -7,6 +7,8 @@ const loadMoreUrl = (matchId, newest) => {
 };
 
 Apify.main(async () => {
+  const dataset = await Apify.openDataset('PRODUCT_LIST');
+
   const input = await Apify.getInput();
   const sources = input.map(
     (matchId) =>
@@ -16,26 +18,26 @@ Apify.main(async () => {
   const requestList = await Apify.openRequestList("my-request-list", sources);
 
   const requestQueue = await Apify.openRequestQueue();
-  await requestQueue.addRequest({
-    url: `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=104572838&newest=0&order=desc&page_type=shop&version=2`,
-  });
+  // await requestQueue.addRequest({
+  //   url: `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=132715430&newest=0&order=desc&page_type=shop&version=2`,
+  // });
 
   const handlePageFunction = async ({ request, json }) => {
     const { items } = json;
-    if (items.length !== 0) {
-      items.forEach((i) => {
-        // console.log(i.itemid);
-      });
+    const matchId = new URL(request.url).searchParams.get("match_id");
 
-      console.log(
-        items.length,
-        request.url,
-        Number(new URL(request.url).searchParams.get("newest")) + items.length
-      );
+    if (items.length !== 0) {
+      const results = items.map((i) => {
+        return {
+          itemid: i.itemid,
+          shopid: matchId,
+        };
+      });
+      await dataset.pushData(results);
 
       await requestQueue.addRequest({
         url: loadMoreUrl(
-          new URL(request.url).searchParams.get("match_id"),
+          matchId,
           Number(new URL(request.url).searchParams.get("newest")) + items.length
         ),
       });
