@@ -7,7 +7,8 @@ const loadMoreUrl = (matchId, newest) => {
 };
 
 Apify.main(async () => {
-  const dataset = await Apify.openDataset('PRODUCT_LIST');
+  const productListDataset = await Apify.openDataset("PRODUCT_LIST");
+  // const productDetailDataset = await Apify.Apify.openDataset("PRODUCT_DETAIL");
 
   const input = await Apify.getInput();
   const sources = input.map(
@@ -15,7 +16,10 @@ Apify.main(async () => {
       `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=${matchId}&newest=0&order=desc&page_type=shop&version=2`
   );
 
-  const requestList = await Apify.openRequestList("my-request-list", sources);
+  const requestList = await Apify.openRequestList(
+    "product-list-request",
+    sources
+  );
 
   const requestQueue = await Apify.openRequestQueue();
   // await requestQueue.addRequest({
@@ -30,10 +34,10 @@ Apify.main(async () => {
       const results = items.map((i) => {
         return {
           itemid: i.itemid,
-          shopid: matchId,
+          shopid: Number(matchId),
         };
       });
-      await dataset.pushData(results);
+      await productListDataset.pushData(results);
 
       await requestQueue.addRequest({
         url: loadMoreUrl(
@@ -51,5 +55,32 @@ Apify.main(async () => {
     additionalMimeTypes: ["application/json"],
   });
 
+  console.log("CRAWLER PRODUCT LIST ...");
   await crawler.run();
+
+  // CRAWLER PRODUCT DETAIL
+  const productDetailSources = await productListDataset.map(async (item) => {
+    return `https://shopee.vn/api/v2/item/get?itemid=${item.itemid}&shopid=${item.shopid}`;
+  });
+
+  const productDetailRequestList = await Apify.openRequestList(
+    "product-detail-request",
+    productDetailSources
+  );
+
+  const handlePageProductDetailFunction = async ({ request, json }) => {
+    const { name, images, description } = json.item;
+    console.log(name);
+  };
+
+  const productDetailcrawler = new Apify.CheerioCrawler({
+    requestList: productDetailRequestList,
+    handlePageFunction: handlePageProductDetailFunction,
+    additionalMimeTypes: ["application/json"],
+  });
+
+  console.log("CRAWLER PRODUCT DETAIL ...");
+  await productDetailcrawler.run();
+
+  console.log("DONE");
 });
