@@ -37,7 +37,6 @@ Apify.main(async () => {
     });
 
     if (!productsCrawled.includes(itemid)) {
-     // console.log(!productsCrawled.includes(itemid), itemid);
       await productDetailListDataset.pushData({
         itemid,
         name,
