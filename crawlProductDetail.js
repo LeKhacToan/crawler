@@ -23,7 +23,7 @@ Apify.main(async () => {
   const productsCrawled = await productDetailListDataset.map(
     async (item) => item.itemid
   );
-  
+
   await productListDataset.map(async (item) => {
     await requestQueue.addRequest({
       url: `https://shopee.vn/api/v2/item/get?itemid=${item.itemid}&shopid=${item.shopid}`,
@@ -54,7 +54,7 @@ Apify.main(async () => {
     additionalMimeTypes: ["application/json"],
   });
 
-  console.log("CRAWLER PRODUCT DETAIL ...");
+  console.log("CRAWL PRODUCT DETAIL ...");
   await crawler.run();
 
   console.log("DONE");

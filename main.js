@@ -55,6 +55,6 @@ Apify.main(async () => {
     additionalMimeTypes: ["application/json"],
   });
 
-  console.log("CRAWLER PRODUCT LIST ...");
+  console.log("CRAWL PRODUCT LIST ...");
   await crawler.run();
 });
