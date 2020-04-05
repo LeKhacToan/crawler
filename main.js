@@ -1,6 +1,7 @@
 const Apify = require("apify");
 
 const LIMIT = 100;
+const shopId = [163135771, 132715430, 132716686, 104572838, 115101393]
 
 const loadMoreUrl = (matchId, newest) => {
   return `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=${matchId}&newest=${newest}&order=desc&page_type=shop&version=2`;
@@ -9,8 +10,7 @@ const loadMoreUrl = (matchId, newest) => {
 Apify.main(async () => {
   const productListDataset = await Apify.openDataset("PRODUCT_LIST");
 
-  const input = await Apify.getInput();
-  const sources = input.map(
+  const sources = shopId.map(
     (matchId) =>
       `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=${matchId}&newest=0&order=desc&page_type=shop&version=2`
   );
@@ -21,10 +21,7 @@ Apify.main(async () => {
   );
 
   const requestQueue = await Apify.openRequestQueue();
-  // await requestQueue.addRequest({
-  //   url: `https://shopee.vn/api/v2/search_items/?by=relevancy&limit=${LIMIT}&match_id=132715430&newest=0&order=desc&page_type=shop&version=2`,
-  // });
-
+  
   const handlePageFunction = async ({ request, json }) => {
     const { items } = json;
 

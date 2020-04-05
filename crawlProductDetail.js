@@ -1,33 +1,55 @@
 const Apify = require("apify");
+const fs = require("fs");
+const https = require("https");
 
-import { saveImageToDisk } from "./downloadImage";
+const localPath = "./images/";
 
+const saveImageToDisk = (url, localPath) => {
+  let file = fs.createWriteStream(localPath);
+  https.get(url, function (response) {
+    response.pipe(file);
+  });
+};
 
-const localPath = './images'
 
 Apify.main(async () => {
   const productListDataset = await Apify.openDataset("PRODUCT_LIST");
-  // const productDetailDataset = await Apify.Apify.openDataset("PRODUCT_DETAIL");
-
-  const sources = await productListDataset.map(async (item) => {
-    return `https://shopee.vn/api/v2/item/get?itemid=${item.itemid}&shopid=${item.shopid}`;
-  });
-
-  const requestList = await Apify.openRequestList(
-    "product-detail-request",
-    sources
+  const productDetailListDataset = await Apify.openDataset(
+    "PRODUCT_DETAIL_LIST"
   );
 
-  const handlePageFunction = async ({ request, json }) => {
-    const { itemid,name, images, description, price } = json.item;
-    images.map((i) => {
-        saveImageToDisk(, [localPath,i,'jpg'].join(''))
+  const requestQueue = await Apify.openRequestQueue();
+
+  const productsCrawled = await productDetailListDataset.map(
+    async (item) => item.itemid
+  );
+  
+  await productListDataset.map(async (item) => {
+    await requestQueue.addRequest({
+      url: `https://shopee.vn/api/v2/item/get?itemid=${item.itemid}&shopid=${item.shopid}`,
     });
-    console.log(name);
+  });
+
+  const handlePageFunction = async ({ request, json }) => {
+    const { itemid, name, images, description, price } = json.item;
+    images.map((i) => {
+      saveImageToDisk("https://cf.shopee.vn/file/"+i, [localPath, i, ".jpg"].join(""));
+    });
+
+    if (!productsCrawled.includes(itemid)) {
+     // console.log(!productsCrawled.includes(itemid), itemid);
+      await productDetailListDataset.pushData({
+        itemid,
+        name,
+        description,
+        price,
+        images: images.map((i) => i + ".jpg"),
+      });
+    }
   };
 
   const crawler = new Apify.CheerioCrawler({
-    requestList,
+    requestQueue,
     handlePageFunction,
     additionalMimeTypes: ["application/json"],
   });
