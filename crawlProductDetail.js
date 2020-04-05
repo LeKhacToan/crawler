@@ -1,9 +1,14 @@
 const Apify = require("apify");
 
+import { saveImageToDisk } from "./downloadImage";
+
+
+const localPath = './images'
+
 Apify.main(async () => {
   const productListDataset = await Apify.openDataset("PRODUCT_LIST");
-   // const productDetailDataset = await Apify.Apify.openDataset("PRODUCT_DETAIL");
-   
+  // const productDetailDataset = await Apify.Apify.openDataset("PRODUCT_DETAIL");
+
   const sources = await productListDataset.map(async (item) => {
     return `https://shopee.vn/api/v2/item/get?itemid=${item.itemid}&shopid=${item.shopid}`;
   });
@@ -14,7 +19,10 @@ Apify.main(async () => {
   );
 
   const handlePageFunction = async ({ request, json }) => {
-    const { name, images, description } = json.item;
+    const { itemid,name, images, description, price } = json.item;
+    images.map((i) => {
+        saveImageToDisk(, [localPath,i,'jpg'].join(''))
+    });
     console.log(name);
   };
 
