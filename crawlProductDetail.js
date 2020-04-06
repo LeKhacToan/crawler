@@ -11,7 +11,6 @@ const saveImageToDisk = (url, localPath) => {
   });
 };
 
-
 Apify.main(async () => {
   const productListDataset = await Apify.openDataset("PRODUCT_LIST");
   const productDetailListDataset = await Apify.openDataset(
@@ -33,7 +32,10 @@ Apify.main(async () => {
   const handlePageFunction = async ({ request, json }) => {
     const { itemid, name, images, description, price } = json.item;
     images.map((i) => {
-      saveImageToDisk("https://cf.shopee.vn/file/"+i, [localPath, i, ".jpg"].join(""));
+      saveImageToDisk(
+        "https://cf.shopee.vn/file/" + i,
+        [localPath, i, ".jpg"].join("")
+      );
     });
 
     if (!productsCrawled.includes(itemid)) {
@@ -42,6 +44,7 @@ Apify.main(async () => {
         name,
         description,
         price,
+        link: request.url,
         images: images.map((i) => i + ".jpg"),
       });
     }
