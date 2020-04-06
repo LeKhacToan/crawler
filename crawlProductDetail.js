@@ -30,7 +30,7 @@ Apify.main(async () => {
   });
 
   const handlePageFunction = async ({ request, json }) => {
-    const { itemid, name, images, description, price } = json.item;
+    const { itemid, name, images, description, price, shopid } = json.item;
     images.map((i) => {
       saveImageToDisk(
         "https://cf.shopee.vn/file/" + i,
@@ -41,6 +41,7 @@ Apify.main(async () => {
     if (!productsCrawled.includes(itemid)) {
       await productDetailListDataset.pushData({
         itemid,
+        shopid,
         name,
         description,
         price,
