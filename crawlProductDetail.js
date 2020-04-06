@@ -44,7 +44,6 @@ Apify.main(async () => {
         name,
         description,
         price,
-        link: request.url,
         images: images.map((i) => i + ".jpg"),
       });
     }
